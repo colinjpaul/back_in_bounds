@@ -1,4 +1,5 @@
 # golf_app.py
+# application to monitor impact of fitness levels on golf game and general health metrics
 
 import pandas as pd
 from dash import Dash, dcc, html
