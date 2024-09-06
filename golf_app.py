@@ -6,9 +6,9 @@ from dash import Dash, dcc, html
 
 data = (
     pd.read_csv("garmin_data.csv")
-    .query("Hole == '1' and score == ''")
-    .assign(date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
-    .sort_values(by="Date")
+    .query("Hole == '1' and Score == '5'")
+    #.assign(date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
+    .sort_values(by="Hole")
 )
 
 app = Dash(__name__)
