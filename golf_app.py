@@ -3,7 +3,6 @@
 # provide correlation with health statistics such as RHR + Avg Ball Speed
 # show that as you get fitter you hit the ball further
 # update from work 17/12/24
-# keeping this alive as might ressurect as part of my ai prompt engineering journey
 import pandas as pd
 from dash import Dash, dcc, html
 
