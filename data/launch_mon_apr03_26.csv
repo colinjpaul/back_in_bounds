@@ -1,0 +1,38 @@
+Date,Location,Device,Club,Model,Carry,Total,Club Speed,Ball Speed,Smash,Spin,Attack Angle,Launch Angle,Launch Dir,Speed (w/o ball)
+06-07-24,Home,PRGR,Driver,Rogue ST Max,236,254,96,143,N/A,N/A,N/A,N/A,N/A,N/A
+06-07-24,Home,PRGR,5 Wood,Rogue ST Max,206,219,94,132,N/A,N/A,N/A,N/A,N/A,N/A
+06-07-24,Home,PRGR,4 Iron,Apex '14,184,198,86,121,N/A,N/A,N/A,N/A,N/A,N/A
+06-07-24,Home,PRGR,5 Iron,Apex '14,173,188,79,116,N/A,N/A,N/A,N/A,N/A,N/A
+04-01-25,McGuirkes,Trackman 4,7 Iron,ai200 '25,169,183,79,114,N/A,N/A,N/A,N/A,N/A,N/A
+02-02-25,Cork GC,PRGR,5 Iron,ai200 '25,200,209,86,128,N/A,N/A,N/A,N/A,N/A,N/A
+24-03-25,Home,PRGR,Driver,Rogue ST Max,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,95
+26-03-25,Home,PRGR,Driver,Rogue ST Max,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,90
+26-06-25,Home,PRGR,5 Iron,ai200 '25,177,188,80,117,1.46,N/A,N/A,N/A,N/A,N/A
+26-06-25,Home,PRGR,6 Iron,ai200 '25,174,179,83,118,1.41,N/A,N/A,N/A,N/A,N/A
+26-06-25,Home,PRGR,7 Iron,ai200 '25,166,170,82,116,1.4,N/A,N/A,N/A,N/A,N/A
+26-06-25,Home,PRGR,8 Iron,ai200 '25,156,159,80,112,1.39,N/A,N/A,N/A,N/A,N/A
+26-06-25,Home,PRGR,9 Iron,ai200 '25,147,147,N/A,107,1.05,N/A,N/A,N/A,N/A,N/A
+08-09-25,Home,PRGR,Driver,Rogue ST Max,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,96
+29-10-25,Frankfield,PRGR,5 Iron,ai200 '25,188,198,85,122,1.44,N/A,N/A,N/A,N/A,N/A
+27-11-25,Frankfield,PRGR,Driver,Rogue ST Max,224,244,97,138,1.42,N/A,N/A,N/A,N/A,N/A
+23-12-25,Fermoy GC,Trackman 4,5 Iron,ai200 '25,203,234,84,130,N/A,2700,N/A,13.3,1.4,N/A
+23-12-25,Fermoy GC,Trackman 4,6 Iron,ai200 '25,184,203,83,118.8,N/A,3040,N/A,16.6,6.8,N/A
+23-12-25,Fermoy GC,Trackman 4,9 Iron,ai200 '25,150,154,81,106,N/A,4842,N/A,24.3,5.5,N/A
+23-12-25,Fermoy GC,Trackman 4,PW,ai200 '25,138,142,77,103,N/A,5632,N/A,26.4,1.3,N/A
+23-12-25,Fermoy GC,Trackman 4,SW (54),ai200 '25,100,102,77.1,85,N/A,8453,N/A,32.7,-1,N/A
+23-12-25,Fermoy GC,Trackman 4,LW (58),ai200 '25,88,90,76,78.4,N/A,9497,N/A,34.7,-2.7,N/A
+15-01-26,Fermoy GC,Trackman 4,Driver,Rogue ST Max,212.6,255.5,92.9,137,1.47,1727,N/A,12.6,1.1,N/A
+15-01-26,Fermoy GC,Trackman 4,5 Wood,Rogue ST Max,196.5,240.2,91.7,134.8,1.47,2989,N/A,7.7,-1.5,N/A
+15-01-26,Fermoy GC,Trackman 4,7 Iron,ai200 '25,179.5,194.9,80.8,119.3,1.48,3758,N/A,15.3,-0.2,N/A
+15-01-26,Fermoy GC,Trackman 4,8 Iron,ai200 '25,165.9,173.9,82.3,112.5,1.37,4183,N/A,20.2,2.1,N/A
+15-01-26,Fermoy GC,Trackman 4,50 deg,ai200 '25,119.5,121.8,73.6,94,1.28,7442,N/A,25.1,-3,N/A
+19-02-26,Home,PRGR,Driver,Rogue ST Max,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,96
+25-02-26,Home,PRGR,Driver,Rogue ST Max,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,95
+04-03-26,Home,PRGR,Driver,Rogue ST Max,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,94
+12-03-26,Fermoy GC,Trackman 4,Driver,Rogue ST Max,219.3,255.4,95.4,139.4,1.46,2445,2.3,11.2,-3.9,N/A
+12-03-26,Fermoy GC,Trackman 4,7 Iron,ai200 '25,170.7,189,78.4,115,1.47,3805,N/A,15.9,3.5,N/A
+12-03-26,Fermoy GC,Trackman 4,7 Iron,ai200 '25,167.4,186.1,79.7,113.5,1.42,3684,N/A,15.4,0.2,N/A
+03-04-26,Fermoy GC,Trackman 4,Driver,Rogue ST Max,230.6,263.9,99.8,148.5,1.49,2287,1.8,9.4,,N/A
+03-04-26,Fermoy GC,Trackman 4,5 Iron,ai200 '25,189.5,233.3,84.8,126,1..49,2371,N/A,12.2,2,N/A
+03-04-26,Fermoy GC,Trackman 4,5 Iron,ai200 '25,195,232.1,83.2,128.7,1.55,2750,N/A,11.2,3.7,N/A
+03-04-26,Fermoy GC,Trackman 4,8 Iron,ai200 '25,167.9,177.5,79.2,113.6,1.43,4159,N/A,18.7,2,N/A
