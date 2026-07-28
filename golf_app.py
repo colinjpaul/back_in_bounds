@@ -8,7 +8,7 @@ import pandas as pd
 
 # Load data from the specific data location defined in your query [1]
 # Using a raw string (r'') to properly handle the backslashes in the file path
-file_path = r'data/launch_mon_mar12_26.csv'
+file_path = r'data/launch_mon_apr03_26.csv'
 df = pd.read_csv(file_path)
 
 # Data preparation based on your CSV structure [1]
@@ -69,4 +69,4 @@ def update_dashboard(selected_club):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
