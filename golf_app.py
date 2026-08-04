@@ -16,6 +16,7 @@ for col in ['Total', 'Club Speed', 'Smash']:
 # 2. APP INITIALIZATION
 # Corrected: Using double underscores (__name__) [1]
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
+server = app.server
 
 # 3. GLOBAL LAYOUT (Dark Theme) [1]
 app.layout = html.Div(style={'backgroundColor': '#121212', 'color': 'white', 'padding': '20px', 'minHeight': '100vh'}, children=[ 
