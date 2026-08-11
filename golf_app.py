@@ -57,7 +57,7 @@ def render_content(tab):
 
     elif tab == 'tab-arccos':
         return html.Div([
-            html.H3('Course Performance (Arccos Insights)', style={'color': 'cyan'}),
+            html.H3('Course Performance (Insights)', style={'color': 'cyan'}),
 
             # 1. KPI Cards for Strokes Gained Breakdown
             html.Div(style={'display': 'flex', 'justifyContent': 'space-around', 'padding': '20px'}, children=[
@@ -93,7 +93,7 @@ def render_content(tab):
             ]),
 
             # 3. Smart Distances (Visualization of Source 4)
-            html.H4("Arccos Smart Distances (Yds)"),
+            html.H4("Smart Distances (Yds)"),
             dcc.Graph(
                 figure=px.bar(
                     # TODO: replace with your real Arccos smart-distance numbers,
