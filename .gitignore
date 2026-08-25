@@ -2,3 +2,5 @@
 .idea/misc.xml
 /.idea
 .DS_Store
+.venv
+.vscode/settings.json
