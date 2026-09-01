@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import dash
+import statsmodels
 from dash import dcc, html, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
