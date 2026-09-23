@@ -339,12 +339,17 @@ def test_parse_and_append_round_ocr_pipeline():
     """
     GIVEN a base64 encoded synthetic scorecard screenshot image
     WHEN parse_and_append_round_ocr is executed
-    THEN it should run PyTesseract OCR, extract round metadata, and update data/fermoy_rounds.csv.
+    THEN it should run PyTesseract OCR, extract round metadata, and append the round to the rounds CSV,
+    without modifying the real data/fermoy_rounds.csv.
     """
     import io
+    import os
     import base64
+    import shutil
+    import tempfile
+    import golf_app_v8
     from PIL import Image, ImageDraw
-    
+
     # Create synthetic test image
     img = Image.new('RGB', (800, 300), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
@@ -358,9 +363,33 @@ def test_parse_and_append_round_ocr_pipeline():
     img.save(buf, format='PNG')
     b64_str = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
     
-    res = parse_and_append_round_ocr(b64_str)
+    # Point the app at a temp copy of the rounds CSV so the test never writes to real data.
+    # Done by hand (not pytest's monkeypatch/tmp_path) so run_tests_v8.py can run it too.
+    real_csv_path = golf_app_v8.FERMOY_CSV_PATH
+    with open(real_csv_path, 'rb') as f:
+        real_csv_before = f.read()
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_csv_path = os.path.join(tmp_dir, 'fermoy_rounds.csv')
+        shutil.copy(real_csv_path, tmp_csv_path)
+        golf_app_v8.FERMOY_CSV_PATH = tmp_csv_path
+        try:
+            res = parse_and_append_round_ocr(b64_str)
+            tmp_df = pd.read_csv(tmp_csv_path)
+        finally:
+            golf_app_v8.FERMOY_CSV_PATH = real_csv_path
+
     assert res is not None
     assert res['status'] == 'success'
     assert res['total_score'] == 70
     assert res['front_score'] == 35
     assert res['back_score'] == 35
+
+    # The round was appended to the temp CSV...
+    new_row = tmp_df.iloc[-1]
+    assert new_row['Round_Title'] == f"Fermoy {res['date_label']}"
+    assert new_row['Total_Score'] == 70
+
+    # ...and the real CSV is byte-for-byte unchanged
+    with open(real_csv_path, 'rb') as f:
+        assert f.read() == real_csv_before
