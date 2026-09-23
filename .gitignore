@@ -4,3 +4,8 @@
 .DS_Store
 .venv
 .vscode/settings.json
+__pycache__/
+*.pyc
+reports/
+
+data/analytics.db

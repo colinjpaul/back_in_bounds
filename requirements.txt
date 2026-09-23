@@ -4,3 +4,7 @@ plotly
 gunicorn
 statsmodels
 pytest
+playwright
+pytesseract
+anthropic
+pytest-playwright

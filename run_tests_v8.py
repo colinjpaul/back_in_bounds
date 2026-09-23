@@ -11,13 +11,13 @@ def run_test_suite():
     print("=" * 70)
     print(" GOLF PERFORMANCE ANALYTICS - CUSTOM TEST RUNNER (PYTEST-STYLE)")
     print("=" * 70)
-    print("Scanning 'test_golf_app_v6.py' for test assertions...")
-    
+    print("Scanning 'test_golf_app_v8.py' for test assertions...")
+
     try:
         # Dynamically import the test module
-        test_module = importlib.import_module('test_golf_app_v6')
+        test_module = importlib.import_module('test_golf_app_v8')
     except Exception as e:
-        print(f"\n[\033[91mCRITICAL ERROR\033[0m] Failed to import 'test_golf_app_v6.py':\n")
+        print(f"\n[\033[91mCRITICAL ERROR\033[0m] Failed to import 'test_golf_app_v8.py':\n")
         traceback.print_exc()
         sys.exit(1)
         
@@ -39,11 +39,11 @@ def run_test_suite():
     total_start = time.time()
     
     # Simple fixture emulation
-    from test_golf_app_v6 import raw_date_series_with_slashes, mock_arccos_distances, mock_arccos_distances_missing_iron
+    from test_golf_app_v8 import raw_date_series_with_slashes, mock_arccos_distances, mock_arccos_distances_missing_iron
     fixtures = {
-        'raw_date_series_with_slashes': raw_date_series_with_slashes(),
-        'mock_arccos_distances': mock_arccos_distances(),
-        'mock_arccos_distances_missing_iron': mock_arccos_distances_missing_iron()
+        'raw_date_series_with_slashes': raw_date_series_with_slashes.__wrapped__(),
+        'mock_arccos_distances': mock_arccos_distances.__wrapped__(),
+        'mock_arccos_distances_missing_iron': mock_arccos_distances_missing_iron.__wrapped__()
     }
     
     for test_name in test_functions:

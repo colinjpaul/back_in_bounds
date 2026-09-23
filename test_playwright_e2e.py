@@ -8,7 +8,7 @@ Target: Running Dash Web Application (http://127.0.0.1:8050)
 To run on your local Mac:
   1. pip install pytest-playwright
   2. playwright install
-  3. python golf_app_v5.py (in Terminal 1)
+  3. python golf_app_v8.py (in Terminal 1)
   4. pytest test_playwright_e2e.py -v (in Terminal 2)
 ==============================================================================
 """
