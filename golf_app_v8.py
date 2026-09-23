@@ -1124,6 +1124,7 @@ def parse_and_append_round_ocr(image_contents):
         ocr_text = pytesseract.image_to_string(gray_img)
         
         # Date extraction
+        round_date = date_label = None
         date_match = re.search(r'(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})', ocr_text, re.IGNORECASE)
         if date_match:
             day, month_str, year = date_match.groups()
@@ -1131,16 +1132,12 @@ def parse_and_append_round_ocr(image_contents):
                 dt = datetime.strptime(f"{day} {month_str[:3]} {year}", "%d %b %Y")
                 round_date = dt.strftime("%Y-%m-%d")
                 date_label = dt.strftime("%d %b %Y")
-            except Exception:
-                round_date = datetime.now().strftime("%Y-%m-%d")
-                date_label = datetime.now().strftime("%d %b %Y")
-        else:
-            round_date = datetime.now().strftime("%Y-%m-%d")
-            date_label = datetime.now().strftime("%d %b %Y")
-            
+            except ValueError:
+                pass
+
         lines = ocr_text.split('\n')
         scores, putts = [], []
-        
+
         for line in lines:
             nums = [int(n) for n in re.findall(r'\b\d+\b', line)]
             line_lower = line.lower()
@@ -1148,20 +1145,22 @@ def parse_and_append_round_ocr(image_contents):
                 scores = nums[:9] + nums[10:19] if len(nums) >= 21 else nums[:18]
             elif 'putt' in line_lower and len(nums) >= 18:
                 putts = nums[:9] + nums[10:19] if len(nums) >= 21 else nums[:18]
-                
+
+        # DEF-001: never fill in values OCR didn't read (par scores, 2 putts, today's date, or another
+        # row's numbers). Saving a made-up round also replaces any real round with the same date.
+        missing = []
+        if round_date is None:
+            missing.append('date')
         if len(scores) != 18:
-            for line in lines:
-                nums = [int(n) for n in re.findall(r'\b\d+\b', line)]
-                if 18 <= len(nums) <= 21 and all(1 <= x <= 12 for x in nums[:9]):
-                    scores = nums[:9] + nums[10:19] if len(nums) >= 21 else nums[:18]
-                    break
-                    
-        fermoy_pars = [4, 3, 4, 5, 3, 5, 4, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 4]
-        if len(scores) != 18:
-            scores = fermoy_pars
+            missing.append('scores')
         if len(putts) != 18:
-            putts = [2] * 18
-            
+            missing.append('putts')
+        if missing:
+            missing_text = missing[0] if len(missing) == 1 else f"{', '.join(missing[:-1])} and {missing[-1]}"
+            return {'status': 'error', 'error': f"Couldn't read the {missing_text} from the scorecard."}
+
+        fermoy_pars = [4, 3, 4, 5, 3, 5, 4, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 4]
+
         girs = [1 if s <= p else 0 for s, p in zip(scores, fermoy_pars)]
         front_score = sum(scores[:9])
         back_score = sum(scores[9:])
@@ -1255,22 +1254,26 @@ def display_upload_success(contents_list):
                 ]
             )
         else:
+            # DEF-001: this branch used to show a green "Uploaded ... successfully!" message on failure
+            message = f"{latest.get('error', 'Could not process the screenshot.')} Nothing was saved from this screenshot."
+            if success_count:
+                message += f" ({success_count} other screenshot(s) were saved.)"
             return html.Div(
                 style={
-                    'marginTop': '15px', 
-                    'backgroundColor': '#1b5e20', 
-                    'border': '1px solid #2ecc71',
-                    'color': '#2ecc71', 
-                    'padding': '12px 15px', 
-                    'borderRadius': '6px', 
-                    'fontSize': '12px', 
-                    'display': 'flex', 
-                    'alignItems': 'center', 
+                    'marginTop': '15px',
+                    'backgroundColor': '#5e1b1b',
+                    'border': '1px solid #e74c3c',
+                    'color': '#e74c3c',
+                    'padding': '12px 15px',
+                    'borderRadius': '6px',
+                    'fontSize': '12px',
+                    'display': 'flex',
+                    'alignItems': 'center',
                     'gap': '10px'
                 },
                 children=[
-                    html.Span("✓", style={'fontWeight': 'bold', 'fontSize': '16px'}),
-                    f"Uploaded {len(contents_list)} round screenshot(s) successfully! Telemetry logged to database."
+                    html.Span("✗", style={'fontWeight': 'bold', 'fontSize': '16px'}),
+                    message
                 ]
             )
     return None
