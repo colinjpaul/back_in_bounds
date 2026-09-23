@@ -420,9 +420,9 @@ def test_load_fermoy_rounds_csv_integration():
     score_col = 'Total_Score' if 'Total_Score' in rounds_df.columns else 'TotalScore'
     front_col = 'Front9' if 'Front9' in rounds_df.columns else 'FrontScore'
     back_col = 'Back9' if 'Back9' in rounds_df.columns else 'BackScore'
-    assert rounds_df.loc[0, score_col] in [82, 86, 70]
-    assert rounds_df.loc[0, front_col] in [47, 40, 35]
-    assert rounds_df.loc[0, back_col] in [35, 46, 35]
+    assert rounds_df.loc[0, score_col] == 82
+    assert rounds_df.loc[0, front_col] == 47
+    assert rounds_df.loc[0, back_col] == 35
     
     # Check aggregated holes
     holes_df = get_fermoy_aggregated_holes()
