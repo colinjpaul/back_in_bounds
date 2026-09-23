@@ -50,9 +50,10 @@ A Plotly Dash golf analytics app, built as a personal project to practice Python
 ```
 
 ### Tier 1: Pytest Unit & Callback Suite (`run_tests_v8.py` / `test_golf_app_v8.py`)
-* 15 test cases covering data-cleaning functions (`clean_and_convert_dates`), the iron-gapping algorithm (`analyze_iron_gapping`), course-scorecard generation, and the Dash callbacks (`render_content`, `update_dashboard`, `update_course_selection`, `update_hole_analysis`, `display_upload_success`) called directly, without a browser.
+* 19 test cases covering data-cleaning functions (`clean_and_convert_dates`), the iron-gapping algorithm (`analyze_iron_gapping`), course-scorecard generation, and the Dash callbacks (`render_content`, `update_dashboard`, `update_course_selection`, `update_hole_analysis`, `display_upload_success`) called directly, without a browser.
 * `run_tests_v8.py` is a small hand-rolled runner (no `pytest` dependency at runtime) that discovers `test_*` functions and reports pass/fail with timings - written to demonstrate understanding of what a test runner actually does, not to replace `pytest` (`pytest test_golf_app_v8.py` runs the same file).
-* One test (`test_parse_and_append_round_ocr_pipeline`) needs the `tesseract` binary installed - it fails with a clear error if it isn't, not a false pass.
+* 4 OCR tests need the `tesseract` binary installed and fail if it isn't, rather than falsely passing.
+* OCR tests run against a temp copy of `data/fermoy_rounds.csv`, and fail if the real file is modified.
 
 ### Tier 2: Playwright E2E Suite (`test_playwright_e2e.py`)
 * Uses `pytest-playwright` against a running instance of the app (Chromium by default; `pytest --browser webkit` also works since Playwright ships the driver, though only Chromium is exercised routinely here).
@@ -63,6 +64,14 @@ A Plotly Dash golf analytics app, built as a personal project to practice Python
 * Tools: `navigate`, `snapshot` (reads the live DOM instead of relying on hardcoded IDs), `click`, `get_text`, `screenshot`, `report_defect`, `finish`.
 * It's a bounded `for` loop calling `client.messages.create()` directly each turn - no `tool_runner`, no agent framework - so every step of the control flow is something I can explain and defend, not a black box.
 * Every run writes `reports/qa_agent_run_<timestamp>/report.md` with the goal, the full tool-call transcript, any defects logged, and the screenshots taken as evidence.
+
+---
+
+## 🐞 Defect Reports
+
+Bugs found while testing this app are written up in [`docs/defects/`](docs/defects/):
+
+* [DEF-001](docs/defects/DEF-001-ocr-silent-overwrite.md): unreadable scorecard uploads were saved as made-up par rounds, overwriting the real round for that date and reporting success. Found through a false-passing unit test. Fixed red/green, and the buggy version is kept at tag `demo/ocr-silent-overwrite` for reproduction.
 
 ---
 
@@ -77,6 +86,7 @@ back_in_bounds/
 ├── test_golf_app_v8.py         # Unit + Dash callback test suite
 ├── test_playwright_e2e.py      # Playwright E2E browser suite
 ├── qa_agent.py                 # Autonomous AI QA agent (manual Claude tool-use loop)
+├── docs/defects/               # Defect reports with evidence
 ├── data/
 │   ├── fermoy_rounds.csv       # Hole-by-hole round telemetry
 │   ├── launch_mon_may21_26.csv # Launch monitor shot telemetry
