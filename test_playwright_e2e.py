@@ -90,9 +90,13 @@ def test_hole_selector_and_caddie_strategy(page: Page):
     """
     page.goto(BASE_URL)
 
-    # Select Hole 15 from hole dropdown
+    # Select Hole 15 from hole dropdown. Scoped to the open dropdown's dialog -
+    # an unscoped "text=Hole 15" also matches the always-visible BOTTLENECK card
+    # heading ("Hole 15 (Index 1)") and a chart axis label, and Playwright's
+    # non-strict page.click() silently clicks whichever of those is first in the
+    # DOM (not necessarily the dropdown option), leaving Hole 1 selected.
     page.click("#hole-selector")
-    page.click("text=Hole 15")
+    page.click("div[role=dialog] >> text=Hole 15")
 
     # Verify Caddie Strategy updates for Hole 15
     strategy_card = page.locator("#deep-dive-strategy-tip")
