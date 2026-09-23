@@ -339,8 +339,12 @@ def test_parse_and_append_round_ocr_pipeline():
     """
     GIVEN a base64 encoded synthetic scorecard screenshot image
     WHEN parse_and_append_round_ocr is executed
-    THEN it should run PyTesseract OCR, extract round metadata, and append the round to the rounds CSV,
-    without modifying the real data/fermoy_rounds.csv.
+    THEN it should run PyTesseract OCR, extract the date and every hole's score and putts from the image,
+    and append the round to the rounds CSV without modifying the real data/fermoy_rounds.csv.
+
+    The scores and putts deliberately differ from par / 2-putts: when OCR can't read a row,
+    parse_and_append_round_ocr falls back to par scores and 2 putts per hole (and today's date),
+    so a par scorecard would pass even if OCR read nothing.
     """
     import io
     import os
@@ -348,17 +352,34 @@ def test_parse_and_append_round_ocr_pipeline():
     import shutil
     import tempfile
     import golf_app_v8
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageFont
 
-    # Create synthetic test image
-    img = Image.new('RGB', (800, 300), color=(255, 255, 255))
+    fermoy_pars = [4, 3, 4, 5, 3, 5, 4, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 4]
+    scores = [5, 4, 5, 6, 3, 6, 5, 4, 5, 5, 3, 4, 5, 6, 4, 5, 4, 5]   # 43 out, 41 in, 84 total
+    putts = [2, 1, 2, 3, 2, 2, 1, 2, 2, 2, 2, 1, 2, 3, 2, 2, 2, 1]    # 34 total
+
+    def card_row(label, holes):
+        return [label] + holes[:9] + [sum(holes[:9])] + holes[9:] + [sum(holes[9:]), sum(holes)]
+
+    rows = [
+        ["Hole"] + list(range(1, 10)) + ["Out"] + list(range(10, 19)) + ["In", "Total"],
+        card_row("Par", fermoy_pars),
+        card_row("Score", scores),
+        card_row("Putts", putts),
+    ]
+
+    # Create a legible synthetic scorecard. Tesseract can't read Pillow's tiny default bitmap font and
+    # merges single digits separated by only 1-2 spaces; 8 spaces at size 32 reads every number exactly
+    # (checked at sizes 28-40 with Tesseract 5.5.3, so this isn't balanced on one lucky setting).
+    font = ImageFont.load_default(size=32)
+    lines = ["Fermoy Golf Club - 15 Sep 2026"] + [(" " * 8).join(str(v) for v in row) for row in rows]
+    line_height = 58
+    width = int(max(font.getlength(line) for line in lines)) + 40
+    img = Image.new('RGB', (width, 40 + len(lines) * line_height), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
-    draw.text((20, 20), "Fermoy Golf Club - 15 Sep 2026", fill=(0, 0, 0))
-    draw.text((20, 60), "Hole  1  2  3  4  5  6  7  8  9 Out 10 11 12 13 14 15 16 17 18 In Total", fill=(0, 0, 0))
-    draw.text((20, 90), "Par   4  3  4  5  3  5  4  3  4  35  4  3  4  4  5  3  4  4  4 35  70", fill=(0, 0, 0))
-    draw.text((20, 120), "Score 4  3  4  5  3  5  4  3  4  35  4  3  4  4  5  3  4  4  4 35  70", fill=(0, 0, 0))
-    draw.text((20, 150), "Putts 2  2  2  2  2  2  2  2  2  18  2  2  2  2  2  2  2  2  2 18  36", fill=(0, 0, 0))
-    
+    for i, line in enumerate(lines):
+        draw.text((20, 20 + i * line_height), line, fill=(0, 0, 0), font=font)
+
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     b64_str = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
@@ -381,14 +402,20 @@ def test_parse_and_append_round_ocr_pipeline():
 
     assert res is not None
     assert res['status'] == 'success'
-    assert res['total_score'] == 70
-    assert res['front_score'] == 35
-    assert res['back_score'] == 35
+    assert res['date_label'] == '15 Sep 2026'
+    assert res['total_score'] == 84
+    assert res['front_score'] == 43
+    assert res['back_score'] == 41
+    assert res['total_putts'] == 34
+    assert res['gir_count'] == sum(1 for s, p in zip(scores, fermoy_pars) if s <= p)  # 4
 
-    # The round was appended to the temp CSV...
+    # The round was appended to the temp CSV with every hole read correctly...
     new_row = tmp_df.iloc[-1]
-    assert new_row['Round_Title'] == f"Fermoy {res['date_label']}"
-    assert new_row['Total_Score'] == 70
+    assert new_row['Date'] == '2026-09-15'
+    assert new_row['Round_Title'] == 'Fermoy 15 Sep 2026'
+    assert new_row['Total_Score'] == 84
+    assert [int(new_row[f'H{h}_Score']) for h in range(1, 19)] == scores
+    assert [int(new_row[f'H{h}_Putts']) for h in range(1, 19)] == putts
 
     # ...and the real CSV is byte-for-byte unchanged
     with open(real_csv_path, 'rb') as f:
