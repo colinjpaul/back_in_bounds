@@ -79,7 +79,7 @@ def test_course_selector_interaction(page: Page):
 
     # Verify Warning Banner is rendered in DOM
     banner = page.locator("#limited-data-banner-container")
-    expect(banner).to_contain_text("No Arccos round files have been uploaded for Cobh Golf Club")
+    expect(banner).to_contain_text("No Golf App round files have been uploaded for Cobh Golf Club")
 
 
 def test_hole_selector_and_caddie_strategy(page: Page):

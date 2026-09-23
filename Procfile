@@ -1,1 +1,1 @@
-web: gunicorn golf_app:server
+web: gunicorn golf_app_v8:server

@@ -790,7 +790,7 @@ def render_content(tab):
                                 style={'backgroundColor': '#1e1e1e', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 4px 6px rgba(0,0,0,0.3)'},
                                 children=[
                                     html.H4("📸 Upload Round Screenshot", style={'margin': '0 0 5px 0', 'color': '#ffffff', 'fontWeight': '600', 'fontSize': '15px'}),
-                                    html.P("Finished a round? Upload your Arccos round overview screenshot to log it manually and update the course databases.", style={'margin': '0 0 15px 0', 'color': '#aaaaaa', 'fontSize': '12px', 'lineHeight': '1.4'}),
+                                    html.P("Finished a round? Upload your Golf App round overview screenshot to log it manually and update the course databases.", style={'margin': '0 0 15px 0', 'color': '#aaaaaa', 'fontSize': '12px', 'lineHeight': '1.4'}),
                                     dcc.Upload(
                                         id='upload-round-screenshot',
                                         children=html.Div([
@@ -973,7 +973,7 @@ def update_course_selection(course_name):
             style={'backgroundColor': '#2c2514', 'border': '1px solid #d35400', 'color': '#f39c12', 'padding': '15px', 'borderRadius': '6px', 'marginBottom': '20px', 'fontSize': '13px'},
             children=[
                 html.Strong("⚠️ Limited Data Mode: "),
-                f"No Arccos round files have been uploaded for {course_name} yet. Displaying baseline estimated performance metrics for a 10 HCP golfer. Upload your on-course Arccos data to unlock personalized analytics."
+                f"No Golf App round files have been uploaded for {course_name} yet. Displaying baseline estimated performance metrics for a 10 HCP golfer. Upload your on-course Golf App data to unlock personalized analytics."
             ]
         )
         
