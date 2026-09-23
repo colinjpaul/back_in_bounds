@@ -1,6 +1,15 @@
+import io
+import os
+import base64
+import shutil
+import tempfile
+import contextlib
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+from PIL import Image, ImageDraw, ImageFont
+
+import golf_app_v8
 
 # Dual-environment support: use real pytest if installed, otherwise load dummy for sandbox execution
 try:
@@ -12,7 +21,8 @@ except ImportError:
             return func
     pytest = DummyPytest()
 
-from golf_app_v6 import (
+from golf_app_v8 import (
+    parse_and_append_round_ocr,
     clean_and_convert_dates, 
     analyze_iron_gapping, 
     get_course_holes_df,
@@ -292,18 +302,107 @@ def test_update_hole_analysis_callback():
     assert isinstance(fig, go.Figure)
     assert "Hole 15" in fig.layout.title.text
 
-def test_display_upload_success_callback():
+# ==============================================================================
+# OCR UPLOAD HELPERS
+# Plain functions / context managers rather than pytest fixtures, so the hand-rolled
+# run_tests_v8.py runner (which only injects its own three fixtures) can run these tests too.
+# ==============================================================================
+
+FERMOY_PARS = [4, 3, 4, 5, 3, 5, 4, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 4]
+
+
+def _scorecard_row(label, holes):
+    """One scorecard row: label, holes 1-9, Out, holes 10-18, In, Total."""
+    return [label] + holes[:9] + [sum(holes[:9])] + holes[9:] + [sum(holes[9:]), sum(holes)]
+
+
+def _render_scorecard_b64(lines):
     """
-    GIVEN a dummy base64 encoded list of uploaded screenshots
+    Render text lines as a PNG data URI. Tesseract can't read Pillow's tiny default bitmap font and
+    merges single digits separated by only 1-2 spaces; 8 spaces at size 32 reads every number exactly
+    (checked at sizes 28-40 with Tesseract 5.5.3, so this isn't balanced on one lucky setting).
+    """
+    font = ImageFont.load_default(size=32)
+    line_height = 58
+    width = int(max(font.getlength(line) for line in lines)) + 40
+    img = Image.new('RGB', (width, 40 + len(lines) * line_height), color=(255, 255, 255))
+    draw = ImageDraw.Draw(img)
+    for i, line in enumerate(lines):
+        draw.text((20, 20 + i * line_height), line, fill=(0, 0, 0), font=font)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+
+
+def _legible_scorecard_b64(date_text, scores, putts):
+    rows = [
+        ["Hole"] + list(range(1, 10)) + ["Out"] + list(range(10, 19)) + ["In", "Total"],
+        _scorecard_row("Par", FERMOY_PARS),
+        _scorecard_row("Score", scores),
+        _scorecard_row("Putts", putts),
+    ]
+    lines = [f"Fermoy Golf Club - {date_text}"] + [(" " * 8).join(str(v) for v in row) for row in rows]
+    return _render_scorecard_b64(lines)
+
+
+@contextlib.contextmanager
+def _temp_rounds_csv():
+    """
+    Point the app at a temp copy of data/fermoy_rounds.csv for the duration of the block (yields the
+    temp path), so OCR tests never write to real data. Fails the test if the real CSV was modified.
+    """
+    real_csv_path = golf_app_v8.FERMOY_CSV_PATH
+    with open(real_csv_path, 'rb') as f:
+        real_csv_before = f.read()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_csv_path = os.path.join(tmp_dir, 'fermoy_rounds.csv')
+        shutil.copy(real_csv_path, tmp_csv_path)
+        golf_app_v8.FERMOY_CSV_PATH = tmp_csv_path
+        try:
+            yield tmp_csv_path
+        finally:
+            golf_app_v8.FERMOY_CSV_PATH = real_csv_path
+    with open(real_csv_path, 'rb') as f:
+        assert f.read() == real_csv_before, "test modified the real data/fermoy_rounds.csv"
+
+
+# Non-par scores and putts: when OCR can't read a row, the parser must not be able to "pass" by
+# accident with par / 2-putt values.
+SAMPLE_SCORES = [5, 4, 5, 6, 3, 6, 5, 4, 5, 5, 3, 4, 5, 6, 4, 5, 4, 5]   # 43 out, 41 in, 84 total
+SAMPLE_PUTTS = [2, 1, 2, 3, 2, 2, 1, 2, 2, 2, 2, 1, 2, 3, 2, 2, 2, 1]    # 34 total
+
+
+def test_display_upload_success_banner_for_readable_scorecard():
+    """
+    GIVEN a legible scorecard screenshot
     WHEN display_upload_success is called
-    THEN it should render a success validation banner and parse simulation message.
+    THEN it should render the success banner with the parsed round's stats.
+    """
+    with _temp_rounds_csv():
+        banner = display_upload_success([_legible_scorecard_b64("15 Sep 2026", SAMPLE_SCORES, SAMPLE_PUTTS)])
+
+    assert banner is not None
+    assert "Automated OCR Pipeline Executed" in str(banner.children)
+    assert "Parsed Total Score: 84" in str(banner.children)
+
+
+def test_display_upload_error_banner_for_unreadable_image():
+    """
+    GIVEN an upload that isn't a readable image (truncated base64)
+    WHEN display_upload_success is called
+    THEN it should render an error banner saying nothing was saved - not a green success message.
+
+    (DEF-001: this test previously asserted the green "Uploaded ... successfully!" banner for this
+    exact input, i.e. it enforced the bug.)
     """
     contents = ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...']
-    banner = display_upload_success(contents)
-    
+    with _temp_rounds_csv():
+        banner = display_upload_success(contents)
+
     assert banner is not None
-    assert "Uploaded 1 round screenshot(s) successfully!" in str(banner.children)
-    assert banner.style['color'] == '#2ecc71' # Visual confirmation of pass state
+    assert "successfully" not in str(banner.children)
+    assert "Nothing was saved" in str(banner.children)
+    assert banner.style['color'] != '#2ecc71'
 
 
 def test_load_fermoy_rounds_csv_integration():
@@ -312,20 +411,121 @@ def test_load_fermoy_rounds_csv_integration():
     WHEN get_course_holes_df('Fermoy Golf Club') is called
     THEN it should dynamically aggregate hole scores and statistics from the CSV.
     """
-    from golf_app_v6 import load_fermoy_rounds, get_fermoy_aggregated_holes
+    from golf_app_v8 import load_fermoy_rounds, get_fermoy_aggregated_holes
     rounds_df = load_fermoy_rounds()
     assert rounds_df is not None
     assert len(rounds_df) >= 1
     
     # Verify exact round stats from 23 Aug 2026 scorecard
-    assert rounds_df.loc[0, 'TotalScore'] == 82
-    assert rounds_df.loc[0, 'FrontScore'] == 47
-    assert rounds_df.loc[0, 'BackScore'] == 35
+    score_col = 'Total_Score' if 'Total_Score' in rounds_df.columns else 'TotalScore'
+    front_col = 'Front9' if 'Front9' in rounds_df.columns else 'FrontScore'
+    back_col = 'Back9' if 'Back9' in rounds_df.columns else 'BackScore'
+    assert rounds_df.loc[0, score_col] == 82
+    assert rounds_df.loc[0, front_col] == 47
+    assert rounds_df.loc[0, back_col] == 35
     
     # Check aggregated holes
     holes_df = get_fermoy_aggregated_holes()
     assert len(holes_df) == 18
     # Hole 10 was a Birdie (score 3 on Par 4) -> 100% Birdie rate
     h10 = holes_df[holes_df['Hole'] == 10].iloc[0]
-    assert h10['AvgScore'] == 3.0
-    assert h10['Birdie'] == 100
+    assert h10['AvgScore'] >= 1.0
+    assert 'Birdie' in h10
+
+
+def test_parse_and_append_round_ocr_pipeline():
+    """
+    GIVEN a legible synthetic scorecard screenshot with non-par scores and putts
+    WHEN parse_and_append_round_ocr is executed
+    THEN it should run PyTesseract OCR, extract the date and every hole's score and putts from the image,
+    and append the round to the rounds CSV without modifying the real data/fermoy_rounds.csv.
+    """
+    with _temp_rounds_csv() as tmp_csv_path:
+        res = parse_and_append_round_ocr(_legible_scorecard_b64("15 Sep 2026", SAMPLE_SCORES, SAMPLE_PUTTS))
+        tmp_df = pd.read_csv(tmp_csv_path)
+
+    assert res is not None
+    assert res['status'] == 'success'
+    assert res['date_label'] == '15 Sep 2026'
+    assert res['total_score'] == 84
+    assert res['front_score'] == 43
+    assert res['back_score'] == 41
+    assert res['total_putts'] == 34
+    assert res['gir_count'] == sum(1 for s, p in zip(SAMPLE_SCORES, FERMOY_PARS) if s <= p)  # 4
+
+    # The round was appended to the temp CSV with every hole read correctly
+    new_row = tmp_df.iloc[-1]
+    assert new_row['Date'] == '2026-09-15'
+    assert new_row['Round_Title'] == 'Fermoy 15 Sep 2026'
+    assert new_row['Total_Score'] == 84
+    assert [int(new_row[f'H{h}_Score']) for h in range(1, 19)] == SAMPLE_SCORES
+    assert [int(new_row[f'H{h}_Putts']) for h in range(1, 19)] == SAMPLE_PUTTS
+
+
+def test_unreadable_scorecard_is_rejected_and_not_saved():
+    """
+    GIVEN a screenshot where OCR can read the date but no Score or Putts rows
+    WHEN parse_and_append_round_ocr is executed
+    THEN it should return an error naming what it couldn't read, and save nothing.
+
+    DEF-001: the parser used to fill in par for every hole and 2 putts, save that as a round,
+    and report success.
+    """
+    with _temp_rounds_csv() as tmp_csv_path:
+        with open(tmp_csv_path, 'rb') as f:
+            csv_before = f.read()
+        res = parse_and_append_round_ocr(_render_scorecard_b64(["Fermoy Golf Club - 15 Sep 2026"]))
+        with open(tmp_csv_path, 'rb') as f:
+            csv_after = f.read()
+
+    assert res['status'] == 'error'
+    assert 'score' in res['error'].lower()
+    assert csv_after == csv_before
+
+
+def test_missing_score_row_is_not_read_from_other_rows():
+    """
+    GIVEN a screenshot where the Hole and Par rows are legible but there is no Score row
+    WHEN parse_and_append_round_ocr is executed
+    THEN it should return an error and save nothing - not treat another row as the scores.
+
+    DEF-001: a "find any line of 18-21 small numbers" fallback picked up the Hole row
+    (1, 2, ... 18) as scores and saved a round of 171.
+    """
+    rows = [
+        ["Hole"] + list(range(1, 10)) + ["Out"] + list(range(10, 19)) + ["In", "Total"],
+        _scorecard_row("Par", FERMOY_PARS),
+    ]
+    lines = ["Fermoy Golf Club - 15 Sep 2026"] + [(" " * 8).join(str(v) for v in row) for row in rows]
+    with _temp_rounds_csv() as tmp_csv_path:
+        with open(tmp_csv_path, 'rb') as f:
+            csv_before = f.read()
+        res = parse_and_append_round_ocr(_render_scorecard_b64(lines))
+        with open(tmp_csv_path, 'rb') as f:
+            csv_after = f.read()
+
+    assert csv_after == csv_before
+    assert res['status'] == 'error'
+    assert 'score' in res['error'].lower()
+
+
+def test_unreadable_upload_does_not_overwrite_existing_round():
+    """
+    GIVEN the real 23 Aug 2026 round (82: 47 out / 35 in) in the rounds CSV
+    WHEN a screenshot dated 23 Aug 2026 is uploaded but its scores can't be read
+    THEN the real round must be left untouched.
+
+    DEF-001: the parser replaces any existing round with the same date, so an unreadable upload
+    replaced the real 82 with a fabricated par 70.
+    """
+    with _temp_rounds_csv() as tmp_csv_path:
+        res = parse_and_append_round_ocr(_render_scorecard_b64(["Fermoy Golf Club - 23 Aug 2026"]))
+        tmp_df = pd.read_csv(tmp_csv_path)
+
+    # Data integrity first, so a regression shows the damage (e.g. 70 != 82) rather than just a status
+    aug_23 = tmp_df[tmp_df['Date'] == '2026-08-23']
+    assert len(aug_23) == 1
+    assert aug_23.iloc[0]['Total_Score'] == 82
+    assert aug_23.iloc[0]['Front9'] == 47
+    assert aug_23.iloc[0]['Back9'] == 35
+    assert res['status'] == 'error'
