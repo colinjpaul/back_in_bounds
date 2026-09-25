@@ -23,6 +23,7 @@ import dash
 from dash import dcc, html, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
+from export_to_sqlite import ensure_launch_monitor_csv, sync_csv_to_sqlite
 # ==============================================================================
 # 1. CORE UTILITY & DATA CLEANING FUNCTIONS (Unit Test Targets)
 # ==============================================================================
@@ -56,50 +57,10 @@ def analyze_iron_gapping(distances_dict):
     return gaps
 
 # ==============================================================================
-# 2. AUTO-GENERATION OF MOCK LAUNCH MONITOR DATA (For stand-alone demo)
+# 2. LOAD LAUNCH MONITOR DATA (generates a mock dataset via export_to_sqlite.py
+#    if no real CSV is present - see ensure_launch_monitor_csv())
 # ==============================================================================
-os.makedirs('data', exist_ok=True)
-csv_path = 'data/launch_mon_may21_26.csv'
-
-if not os.path.exists(csv_path):
-    # Generating realistic 10 HCP launch monitor dataset
-    clubs = ['Driver', '5 Wood', '4 Iron', '5 Iron', '6 Iron', '7 Iron', '8 Iron', '9 Iron', 'PW', 'LW (58)']
-    dates = ['06-07-24', '12-08-24', '15-10-24', '04-03-25', '14-05-25', '21-05-26', '23-05-26', '12-06-26', '18-07-26']
-    
-    base_stats = {
-        'Driver': {'speed': (95, 101), 'smash': (1.42, 1.48), 'distance_mult': 2.45},
-        '5 Wood': {'speed': (88, 93), 'smash': (1.38, 1.44), 'distance_mult': 2.30},
-        '4 Iron': {'speed': (82, 86), 'smash': (1.33, 1.39), 'distance_mult': 2.20},
-        '5 Iron': {'speed': (80, 84), 'smash': (1.31, 1.37), 'distance_mult': 2.15},
-        '6 Iron': {'speed': (77, 81), 'smash': (1.29, 1.35), 'distance_mult': 2.10},
-        '7 Iron': {'speed': (74, 78), 'smash': (1.27, 1.33), 'distance_mult': 2.05},
-        '8 Iron': {'speed': (71, 75), 'smash': (1.25, 1.31), 'distance_mult': 2.00},
-        '9 Iron': {'speed': (68, 72), 'smash': (1.23, 1.29), 'distance_mult': 1.95},
-        'PW': {'speed': (65, 69), 'smash': (1.20, 1.26), 'distance_mult': 1.90},
-        'LW (58)': {'speed': (60, 64), 'smash': (1.10, 1.18), 'distance_mult': 1.65}
-    }
-    
-    data = []
-    np.random.seed(42)
-    for _ in range(120):
-        club = np.random.choice(clubs)
-        date = np.random.choice(dates)
-        if np.random.rand() < 0.2:
-            date = date.replace('-', '/')  # Inject occasional slashes to verify date cleaning
-            
-        stats = base_stats[club]
-        speed = np.round(np.random.uniform(*stats['speed']), 1)
-        smash = np.round(np.random.uniform(*stats['smash']), 2)
-        total = np.round(speed * smash * stats['distance_mult'] * np.random.uniform(0.97, 1.03), 1)
-        
-        data.append({
-            'Date': date,
-            'Club': club,
-            'Club Speed': speed,
-            'Smash': smash,
-            'Total': total
-        })
-    pd.DataFrame(data).to_csv(csv_path, index=False)
+csv_path = ensure_launch_monitor_csv()
 
 # Load and clean launch monitor data
 df = pd.read_csv(csv_path)
@@ -543,7 +504,6 @@ def get_course_holes_df(course_name):
 # 4. DASH APP STRUCTURAL BOOTSTRAP
 # ============================================================================= =
 
-from export_to_sqlite import sync_csv_to_sqlite
 try:
     sync_csv_to_sqlite()
 except Exception as e:

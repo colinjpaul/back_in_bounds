@@ -6,7 +6,7 @@ import numpy as np
 def ensure_launch_monitor_csv():
     """Generates mock launch monitor data if CSV is not present on disk."""
     os.makedirs('data', exist_ok=True)
-    csv_path = 'data/launch_mon_may21_26.csv'
+    csv_path = 'data/Launch Monitor Data.csv'
     if not os.path.exists(csv_path):
         clubs = ['Driver', '5 Wood', '4 Iron', '5 Iron', '6 Iron', '7 Iron', '8 Iron', '9 Iron', 'PW', 'LW (58)']
         dates = ['06-07-24', '12-08-24', '15-10-24', '04-03-25', '14-05-25', '21-05-26', '23-05-26', '12-06-26', '18-07-26']
@@ -27,6 +27,8 @@ def ensure_launch_monitor_csv():
         for _ in range(120):
             club = np.random.choice(clubs)
             date = np.random.choice(dates)
+            if np.random.rand() < 0.2:
+                date = date.replace('-', '/')  # Inject occasional slashes to verify date cleaning
             stats = base_stats[club]
             speed = np.round(np.random.uniform(*stats['speed']), 1)
             smash = np.round(np.random.uniform(*stats['smash']), 2)
