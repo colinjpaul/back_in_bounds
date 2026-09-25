@@ -1,9 +1,21 @@
 import os
 import io
 import re
+import shutil
 import base64
 import pytesseract
 from PIL import Image
+
+# On macOS, Homebrew's tesseract binary often isn't on PATH for processes
+# launched outside an interactive shell (e.g. via an IDE), even though it
+# works fine from the terminal. Fall back to the common Homebrew locations
+# only if `tesseract` isn't already resolvable, so deployed environments
+# (e.g. Render/Linux) that already have it on PATH are unaffected.
+if shutil.which('tesseract') is None:
+    for _candidate in ('/opt/homebrew/bin/tesseract', '/usr/local/bin/tesseract'):
+        if os.path.exists(_candidate):
+            pytesseract.pytesseract.tesseract_cmd = _candidate
+            break
 from datetime import datetime
 import pandas as pd
 import numpy as np
@@ -119,9 +131,9 @@ global_fig.update_layout(
 COURSES_DB = {
     "Fermoy Golf Club": {
         "location": "Fermoy, County Cork",
-        "par": 71,
-        "yards": 6403,
-        "status": "Active (114 Rounds Tracked)",
+        "par": 70,  # from the real Men's scorecard (Blue/White/Green all play to Par 70)
+        "yards": 6097,  # sum of fermoy_base_yards below (White tees)
+        "status": "Active",  # unused when has_real_data is True; badge_text is computed live from get_fermoy_round_count()
         "has_real_data": True,
         "best_holes": "Holes 4 & 16",
         "worst_hole": "Hole 15 (Index 1)",
@@ -333,6 +345,13 @@ def load_fermoy_rounds():
             pass
     return None
 
+def get_fermoy_round_count():
+    """
+    Number of real Fermoy rounds logged in the CSV, for display in the course status badge.
+    """
+    rounds_df = load_fermoy_rounds()
+    return len(rounds_df) if rounds_df is not None else 0
+
 def get_fermoy_aggregated_holes():
     """
     Aggregates logged Fermoy rounds to produce hole-by-hole stats.
@@ -344,10 +363,11 @@ def get_fermoy_aggregated_holes():
     
     # Process rounds_df to compute aggregated stats per hole
     holes_data = []
-    # Base layout metadata for Fermoy
+    # Base layout metadata for Fermoy, taken from the real Men's scorecard (White tees for
+    # yardage; Par and Index are shared across Blue/White/Green men's tees on the card).
     fermoy_base_pars = [4, 3, 4, 5, 3, 5, 4, 3, 4, 4, 3, 4, 4, 5, 3, 4, 4, 4]
-    fermoy_base_yards = [361, 388, 437, 143, 396, 350, 513, 168, 411, 355, 390, 198, 382, 404, 442, 532, 151, 382]
-    fermoy_base_indices = [12, 10, 2, 18, 8, 14, 4, 16, 6, 15, 9, 7, 11, 3, 1, 13, 17, 5]
+    fermoy_base_yards = [347, 198, 375, 516, 184, 521, 337, 164, 354, 379, 167, 340, 459, 465, 161, 395, 361, 374]
+    fermoy_base_indices = [6, 8, 10, 4, 16, 12, 14, 18, 2, 13, 15, 7, 1, 11, 17, 3, 9, 5]
     
     num_rounds = len(rounds_df)
     
@@ -363,8 +383,12 @@ def get_fermoy_aggregated_holes():
         avg_score = float(np.mean(scores))
         avg_gir = float(np.mean(girs)) * 100
         avg_putts = float(np.mean(putts))
-        sg = np.round(par - avg_score, 2)
-        
+        # A 5-handicap golfer receives a stroke on the 5 hardest holes (stroke index 1-5),
+        # so their target on those holes is par+1, not par. This makes the "vs 5 HCP" label
+        # on the SG chart/cards actually true, instead of silently comparing to scratch (par).
+        hcp_target = par + (1 if idx <= 5 else 0)
+        sg = np.round(hcp_target - avg_score, 2)
+
         # Calculate scoring distribution
         birdies = sum(s <= par - 1 for s in scores)
         pars_cnt = sum(s == par for s in scores)
@@ -789,7 +813,7 @@ def render_content(tab):
                             html.Div(
                                 style={'backgroundColor': '#1e1e1e', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 4px 6px rgba(0,0,0,0.3)'},
                                 children=[
-                                    html.H4("📸 Upload Round Screenshot", style={'margin': '0 0 5px 0', 'color': '#ffffff', 'fontWeight': '600', 'fontSize': '15px'}),
+                                    html.H4("📸 Upload Round Screenshot (Coming Soon)", style={'margin': '0 0 5px 0', 'color': '#ffffff', 'fontWeight': '600', 'fontSize': '15px'}),
                                     html.P("Finished a round? Upload your Golf App round overview screenshot to log it manually and update the course databases.", style={'margin': '0 0 15px 0', 'color': '#aaaaaa', 'fontSize': '12px', 'lineHeight': '1.4'}),
                                     dcc.Upload(
                                         id='upload-round-screenshot',
@@ -963,7 +987,11 @@ def update_course_selection(course_name):
     has_real = metadata["has_real_data"]
     
     # Status Badge styling
-    badge_text = metadata["status"]
+    if has_real:
+        round_count = get_fermoy_round_count()
+        badge_text = f"Active ({round_count} Round{'s' if round_count != 1 else ''} Tracked)"
+    else:
+        badge_text = metadata["status"]
     if has_real:
         badge_style = {'backgroundColor': '#1b5e20', 'color': '#2ecc71', 'padding': '4px 12px', 'borderRadius': '12px', 'fontSize': '12px', 'fontWeight': 'bold'}
         banner_child = None
@@ -980,15 +1008,32 @@ def update_course_selection(course_name):
     # Overview metrics
     par_yards_str = f"Par {metadata['par']} / {metadata['yards']:,}y"
     loc_str = metadata["location"]
-    best_holes = metadata["best_holes"]
-    best_sg_str = "+0.05 SG vs. 5 HCP" if has_real else "Estimated Strengths"
-    worst_hole = metadata["worst_hole"]
-    worst_details = "-0.65 SG (442y Par 4)" if has_real else "Estimated Bottleneck"
-    avg_score_str = f"{metadata['avg_score']:.1f} Avg"
-    overall_sg_str = f"{metadata['overall_sg']:+.1f} SG vs. 5 HCP"
-    
+
     # Load hole DataFrame for course
     holes_df = get_course_holes_df(course_name)
+
+    if has_real:
+        # DEF-003: these used to be fixed values in COURSES_DB regardless of what was actually
+        # logged. Derive them from the real rounds/holes data instead.
+        rounds_df = load_fermoy_rounds()
+        avg_score_str = f"{rounds_df['Total_Score'].mean():.1f} Avg"
+        overall_sg_str = f"{holes_df['SG'].sum():+.1f} SG vs. 5 HCP"
+
+        best_row = holes_df.loc[holes_df['SG'].idxmax()]
+        best_hole_nums = holes_df.loc[holes_df['SG'] == best_row['SG'], 'Hole'].tolist()
+        best_holes = ("Hole " if len(best_hole_nums) == 1 else "Holes ") + " & ".join(str(h) for h in best_hole_nums)
+        best_sg_str = f"{best_row['SG']:+.2f} SG vs. 5 HCP"
+
+        worst_row = holes_df.loc[holes_df['SG'].idxmin()]
+        worst_hole = f"Hole {int(worst_row['Hole'])} (Index {int(worst_row['Index'])})"
+        worst_details = f"{worst_row['SG']:+.2f} SG ({int(worst_row['Yards'])}y Par {int(worst_row['Par'])})"
+    else:
+        best_holes = metadata["best_holes"]
+        best_sg_str = "Estimated Strengths"
+        worst_hole = metadata["worst_hole"]
+        worst_details = "Estimated Bottleneck"
+        avg_score_str = f"{metadata['avg_score']:.1f} Avg"
+        overall_sg_str = f"{metadata['overall_sg']:+.1f} SG vs. 5 HCP"
     
     # Generate overview bar chart
     sg_values = holes_df['SG'].tolist()

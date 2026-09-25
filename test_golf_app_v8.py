@@ -148,7 +148,7 @@ def test_get_course_holes_df_fermoy():
     assert len(holes_df) == 18
     # Assert first hole details
     assert holes_df.loc[0, 'Par'] == 4
-    assert holes_df.loc[0, 'Yards'] == 361
+    assert holes_df.loc[0, 'Yards'] == 347  # real scorecard, White tees
     assert "opening Par 4" in holes_df.loc[0, 'Tip']
 
 def test_get_course_holes_df_limited_data_course():
@@ -265,10 +265,13 @@ def test_update_course_selection_callback():
     res_fermoy = update_course_selection("Fermoy Golf Club")
     badge_txt, badge_style, banner, par_yards, loc, best, best_sg, worst, worst_det, avg_score, overall_sg, fig, hole_opts, val = res_fermoy
     
-    assert badge_txt == "Active (114 Rounds Tracked)"
+    # Badge reflects the live count of rounds in data/fermoy_rounds.csv, not a hardcoded number
+    # (DEF-003: the badge used to claim "114 Rounds Tracked" regardless of actual data).
+    expected_count = golf_app_v8.get_fermoy_round_count()
+    assert badge_txt == f"Active ({expected_count} Round{'s' if expected_count != 1 else ''} Tracked)"
     assert badge_style['backgroundColor'] == '#1b5e20' # Green
     assert banner is None # No warning banner for Fermoy
-    assert "Par 71 / 6,403y" in par_yards
+    assert "Par 70 / 6,097y" in par_yards  # real scorecard, White tees
     assert len(hole_opts) == 18
     assert isinstance(fig, go.Figure)
     
@@ -289,15 +292,20 @@ def test_update_hole_analysis_callback():
     WHEN update_hole_analysis is executed
     THEN it should return appropriate yardage tags, scoring cards, caddie strategy, and a scoring donut plot.
     """
-    # Test Hole 15 (Index 1) on Fermoy
+    # Test Hole 15 on Fermoy (real scorecard: Par 3, Index 17, White tees 161y)
     res = update_hole_analysis("Fermoy Golf Club", 15)
     attr_tag, avg, sg, card_style, gir, putts, tip, fig = res
-    
-    assert "Yardage: 442y" in attr_tag
-    assert "Index: 1" in attr_tag
+
+    assert "Yardage: 161y" in attr_tag
+    assert "Index: 17" in attr_tag
     assert "3.00" in avg
+    # Index 17 is not a stroke hole for a 5 HCP (only index <= 5 get a stroke), so target
+    # here is just par(3): SG = 3 - 3.00 = +0.00.
     assert "+0.00" in sg
     assert card_style['borderBottom'] == '4px solid #2ecc71' # Green border for par or better
+    # The caddie tip text still comes from the fermoy_holes_raw fallback dataset, which was
+    # deliberately left describing Hole 15 as "Index 1" (DEF-002's planted demo bug) even
+    # though the live Index shown above is now the real 17.
     assert "Index 1 hole" in tip
     assert isinstance(fig, go.Figure)
     assert "Hole 15" in fig.layout.title.text
@@ -416,13 +424,15 @@ def test_load_fermoy_rounds_csv_integration():
     assert rounds_df is not None
     assert len(rounds_df) >= 1
     
-    # Verify exact round stats from 23 Aug 2026 scorecard
+    # Verify exact round stats from 23 Aug 2026 scorecard, looked up by date rather than row
+    # position so this doesn't break as more rounds are logged.
     score_col = 'Total_Score' if 'Total_Score' in rounds_df.columns else 'TotalScore'
     front_col = 'Front9' if 'Front9' in rounds_df.columns else 'FrontScore'
     back_col = 'Back9' if 'Back9' in rounds_df.columns else 'BackScore'
-    assert rounds_df.loc[0, score_col] == 82
-    assert rounds_df.loc[0, front_col] == 47
-    assert rounds_df.loc[0, back_col] == 35
+    aug_23 = rounds_df[rounds_df['Date'] == '2026-08-23'].iloc[0]
+    assert aug_23[score_col] == 82
+    assert aug_23[front_col] == 47
+    assert aug_23[back_col] == 35
     
     # Check aggregated holes
     holes_df = get_fermoy_aggregated_holes()
