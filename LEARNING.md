@@ -19,6 +19,7 @@ Colin's job-search learning plan, worked through **on this repo**. Each step is 
 
 Already in place: 5 E2E tests (header, tabs, course selector, hole selector, upload widget).
 
+- [ ] **PW0** Do this first, manually: with the app running, change one value in `data/fermoy_rounds.csv` and one in `data/Launch Monitor Data.csv`, then confirm both changes show in the app (Round Analysis for Fermoy, Range Sessions for that club). Note whether a restart was needed, then undo the edits. This becomes the spec for an automated data-to-UI test later.
 - [ ] **PW1** Setup check: run the existing suite with `pytest-playwright`, then with `--headed` and `--slowmo 500` to watch it. Add a `pytest.ini` with `base_url` so tests stop hardcoding `BASE_URL`.
 - [ ] **PW2** Locators: rewrite the CSS/ID locators with `get_by_role`, `get_by_text`, `get_by_test_id`. Add `data-testid` attributes to key Dash components where needed.
 - [ ] **PW3** Assertions: replace any manual waits with `expect()` auto-waiting; add assertions on metric card values (Average Score, GIR %, Putts) for a known course.
