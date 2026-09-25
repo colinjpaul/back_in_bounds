@@ -16,9 +16,9 @@ A Plotly Dash golf analytics app, built as a personal project to practice Python
 * **Round Analysis (On-Course Telemetry)**: Analytics across 16 Irish golf courses (Fermoy, Castlemartyr, Fota Island, Cork, Killarney, etc.). Displays metric cards (Average Score, Strokes Gained vs a 5 HCP target, GIR %, Putts), hole-by-hole Caddie Strategy Tips, an 18-hole Strokes Gained bar chart, and a scoring distribution donut chart.
 * **Range Sessions (Practice Analytics)**: Bag gapping scatter plots, single-club deep dives, an OLS trend line (`statsmodels`), and Smash Factor tracking over time.
 
-### 2. Computer Vision Ingestion (`pytesseract` + Pillow)
-* Drag-and-drop scorecard screenshot upload.
-* Grayscale pre-processing + `pytesseract` OCR, regex-based extraction of date/scores/putts, appended to `data/fermoy_rounds.csv`. Requires the native `tesseract` binary installed separately (e.g. `brew install tesseract`) - `pip install pytesseract` alone is not enough.
+### 2. Computer Vision Ingestion (`pytesseract` + Pillow) — upload UI labeled "Coming Soon"
+* Drag-and-drop scorecard screenshot upload, with grayscale pre-processing + `pytesseract` OCR and regex-based extraction of date/scores/putts, appended to `data/fermoy_rounds.csv`. Requires the native `tesseract` binary installed separately (e.g. `brew install tesseract`) - `pip install pytesseract` alone is not enough.
+* **Real screenshots currently fail to parse.** The synthetic scorecard used in tests reads cleanly, but real captures (`data/round_captures/fermoy-*.png`) have most of their score digits inside colored circle/box annotations that Tesseract's default OCR pass drops unpredictably - confirmed via per-cell crop testing, where isolating a single digit reads correctly even when the same digit is missed reading the full page. DEF-001's rejection behavior means this fails safely (an honest error, nothing fabricated) rather than corrupting data, but it means no real screenshot currently logs a round. The UI is labeled accordingly until a per-cell OCR pass is built. In the meantime, rounds are added directly to the CSV by hand.
 
 ### 3. Relational Database Layer (`export_to_sqlite.py`)
 * Syncs `data/fermoy_rounds.csv` and the launch-monitor practice CSV into SQLite tables (`fermoy_rounds`, `range_sessions`) in `data/analytics.db`, so data can be queried directly instead of only through the UI.
@@ -72,6 +72,8 @@ A Plotly Dash golf analytics app, built as a personal project to practice Python
 Bugs found while testing this app are written up in [`docs/defects/`](docs/defects/):
 
 * [DEF-001](docs/defects/DEF-001-ocr-silent-overwrite.md): unreadable scorecard uploads were saved as made-up par rounds, overwriting the real round for that date and reporting success. Found through a false-passing unit test. Fixed red/green, and the buggy version is kept at tag `demo/ocr-silent-overwrite` for reproduction.
+* [DEF-002](docs/defects/DEF-002-hole15-par-mismatch.md): Hole 15's par/index disagrees depending which UI component you look at, because the app carries two hardcoded descriptions of Fermoy's holes that were never kept in sync. Found by `qa_agent.py`'s autonomous exploration (Tier 3) - the first defect this project's own QA agent has found unprompted. Left intentionally unfixed as a reproducible agent-found-it demo, at tag `demo/hole15-par-mismatch`.
+* [DEF-003](docs/defects/DEF-003-hardcoded-fermoy-stats.md): Fermoy's "real data" summary cards (rounds tracked, avg score, best/worst hole, overall Strokes Gained) were hardcoded and never actually read `data/fermoy_rounds.csv`, unlike the hole-by-hole chart right below them. Fixed by deriving all five from the real CSV; also corrected the Strokes Gained calculation itself (it was labeled "vs 5 HCP" but computed vs scratch) and Fermoy's hole metadata against a real scorecard.
 
 ---
 
