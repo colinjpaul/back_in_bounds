@@ -2,6 +2,8 @@
 
 Colin's job-search learning plan, worked through **on this repo**. Each step is a real change to Back in Bounds, so the learning and the portfolio grow together.
 
+**Back in Bounds is a test lab.** No new golf features and no need for more real rounds. The work here is testing the app: automated tests, test data, CI and SQL checks. Where tests need data, use small, controlled test datasets (fixtures) with known expected values rather than entering real rounds.
+
 **Priority:** Playwright → Python for QA → SQL → Python for SQL
 **Study time:** weekdays 08:30–10:30
 **Progress checklist:** ticked off on the Learning path panel of Colin's *Week & Scorecard* dashboard. Step IDs (PW1, Q1, S1…) match that checklist. Update the `[ ]` boxes here as well if useful.
