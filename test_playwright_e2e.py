@@ -16,16 +16,13 @@ To run on your local Mac:
 import pytest
 from playwright.sync_api import Page, expect
 
-BASE_URL = "http://127.0.0.1:8050"
-
-
 def test_app_header_and_title(page: Page):
     """
     GIVEN the Dash application is running
     WHEN a user navigates to the base URL
     THEN the page title and header banner should display 'Back in Bounds'.
     """
-    page.goto(BASE_URL)
+    page.goto("/")
 
     # Verify Page Title
     expect(page).to_have_title("Dash")
@@ -42,7 +39,7 @@ def test_tab_navigation(page: Page):
     WHEN the user clicks the 'Range Sessions' tab
     THEN the DOM should update to show practice analytics and club deep dive.
     """
-    page.goto(BASE_URL)
+    page.goto("/")
 
     # Assert 'Round Analysis' is active by default
     round_heading = page.locator("h2", has_text="Round Analysis")
@@ -65,7 +62,7 @@ def test_course_selector_interaction(page: Page):
     WHEN the user selects 'Cobh Golf Club' from the course dropdown
     THEN the status badge should update to 'Limited Data Mode' and display a warning banner.
     """
-    page.goto(BASE_URL)
+    page.goto("/")
 
     # Click Course Selector Dropdown
     page.click("#course-selector")
@@ -88,7 +85,7 @@ def test_hole_selector_and_caddie_strategy(page: Page):
     WHEN the user selects Hole 15 from the dropdown
     THEN the metrics and caddie strategy card should update for the Index 1 hole.
     """
-    page.goto(BASE_URL)
+    page.goto("/")
 
     # Select Hole 15 from hole dropdown. Scoped to the open dropdown's dialog -
     # an unscoped "text=Hole 15" also matches the always-visible BOTTLENECK card
@@ -109,7 +106,7 @@ def test_screenshot_upload_widget(page: Page):
     WHEN the user interacts with the drag-and-drop upload widget
     THEN the upload container should be visible and ready for file inputs.
     """
-    page.goto(BASE_URL)
+    page.goto("/")
 
     # Locate the dcc.Upload dropzone
     upload_widget = page.locator("#upload-round-screenshot")

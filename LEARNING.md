@@ -5,8 +5,8 @@ Colin's job-search learning plan, worked through **on this repo**. Each step is 
 **Back in Bounds is a test lab.** No new golf features and no need for more real rounds. The work here is testing the app: automated tests, test data, CI and SQL checks. Where tests need data, use small, controlled test datasets (fixtures) with known expected values rather than entering real rounds.
 
 **Priority:** Playwright → Python for QA → SQL → Python for SQL
-**Study time:** weekdays 08:30–10:30
-**Progress checklist:** ticked off on the Learning path panel of Colin's *Week & Scorecard* dashboard. Step IDs (PW1, Q1, S1…) match that checklist. Update the `[ ]` boxes here as well if useful.
+**Study time:** weekdays 08:30–10:30, shared with CV and job-application work
+**Progress checklist:** ticked off on the Learning path panel of Colin's *Daily Board*. Step IDs (PW1, Q1, S1…) match that checklist. Update the `[ ]` boxes here as well if useful.
 
 ## How to help (for Claude in VS Code)
 
@@ -17,12 +17,25 @@ Colin's job-search learning plan, worked through **on this repo**. Each step is 
 
 ---
 
+## Timeline (revised 5 Oct 2026)
+
+The 2-hour morning block is now shared with CV work, so the plan runs to February instead of being squeezed into a few weeks.
+
+| By | Target |
+|---|---|
+| **End Oct** | Playwright PW1–PW6 (through Page Object Model) |
+| **End Nov** | PW7–PW10 (suite green in GitHub Actions with CI badge) · Python for QA Q1–Q3 |
+| **End Dec** | Python for QA Q4–Q6 · SQL S1–S4 (lighter month: Christmas and GTA) |
+| **Jan–Feb 2027** | SQL S5–S7 · Python for SQL PS1–PS6 · portfolio polish F1–F3 |
+
 ## 1 · Playwright (Python) — extend `test_playwright_e2e.py`
 
 Already in place: 5 E2E tests (header, tabs, course selector, hole selector, upload widget).
 
-- [ ] **PW0** Do this first, manually: with the app running, change one value in `data/fermoy_rounds.csv` and one in `data/Launch Monitor Data.csv`, then confirm both changes show in the app (Round Analysis for Fermoy, Range Sessions for that club). Note whether a restart was needed, then undo the edits. This becomes the spec for an automated data-to-UI test later.
-- [ ] **PW1** Setup check: run the existing suite with `pytest-playwright`, then with `--headed` and `--slowmo 500` to watch it. Add a `pytest.ini` with `base_url` so tests stop hardcoding `BASE_URL`.
+- [x] **PW0** Do this first, manually: with the app running, change one value in `data/fermoy_rounds.csv` and one in `data/Launch Monitor Data.csv`, then confirm both changes show in the app (Round Analysis for Fermoy, Range Sessions for that club). Note whether a restart was needed, then undo the edits. This becomes the spec for an automated data-to-UI test later.
+  - *Done 2026-09-28.* Found [DEF-004](docs/defects/DEF-004-duplicate-score-columns.md) (duplicate score columns). Follow-up on 2 Oct: Fermoy edits show after a browser refresh, but Launch Monitor edits need an app restart ([DEF-005](docs/defects/DEF-005-stale-launch-monitor-data.md)).
+- [x] **PW1** Setup check: run the existing suite with `pytest-playwright`, then with `--headed` and `--slowmo 500` to watch it. Add a `pytest.ini` with `base_url` so tests stop hardcoding `BASE_URL`.
+  - *Done 2026-10-02.* `pytest.ini` sets `base_url = http://127.0.0.1:8050` and the tests now call `page.goto("/")`.
 - [ ] **PW2** Locators: rewrite the CSS/ID locators with `get_by_role`, `get_by_text`, `get_by_test_id`. Add `data-testid` attributes to key Dash components where needed.
 - [ ] **PW3** Assertions: replace any manual waits with `expect()` auto-waiting; add assertions on metric card values (Average Score, GIR %, Putts) for a known course.
 - [ ] **PW4** Interactions: test the Range Sessions tab — club dropdown, scatter chart renders, single-club deep dive updates.
@@ -42,6 +55,7 @@ Already in place: 19 pytest tests and the hand-rolled `run_tests_v8.py` runner.
 - [ ] **Q3** Markers: add `@pytest.mark.ocr`, `unit`, `callback`, `e2e`; register them in `pytest.ini`; skip OCR tests cleanly when `tesseract` is missing.
 - [ ] **Q4** API testing: write `requests` + pytest tests against the running app's HTTP endpoints (status codes, response shape).
 - [ ] **Q5** Test data: move test inputs into `tests/data/*.csv` / `*.json` and load them via fixtures.
+  - *In progress.* `tests/data/fermoy_rounds_sample.csv` and `fermoy_rounds_edge_cases.csv` exist with expected answers in `tests/data/README.md`. Next: a `conftest.py` fixture that loads them, and tests that use it.
 - [ ] **Q6** Reporting: generate a `pytest-html` (or Allure) report; link a sample in the README.
 
 ## 3 · SQL — `data/analytics.db`

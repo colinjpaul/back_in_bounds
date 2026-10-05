@@ -9,3 +9,5 @@ __pycache__/
 reports/
 
 data/analytics.db
+data/fermoy_rounds.gsheet
+data/Launch Monitor Data.gsheet
