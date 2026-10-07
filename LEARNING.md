@@ -25,7 +25,7 @@ The 2-hour morning block is now shared with CV work, so the plan runs to Februar
 |---|---|
 | **End Oct** | Playwright PW1–PW6 (through Page Object Model) |
 | **End Nov** | PW7–PW10 (suite green in GitHub Actions with CI badge) · Python for QA Q1–Q3 |
-| **End Dec** | Python for QA Q4–Q6 · SQL S1–S4 (lighter month: Christmas and GTA) |
+| **End Dec** | Python for QA Q4–Q6 · SQL S1–S4 (lighter month: Christmas) |
 | **Jan–Feb 2027** | SQL S5–S7 · Python for SQL PS1–PS6 · portfolio polish F1–F3 |
 
 ## 1 · Playwright (Python) — extend `test_playwright_e2e.py`
