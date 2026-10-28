@@ -1,12 +1,14 @@
-# Learning Path — Back in Bounds
+# Learning Path — Back in Bounds (QA track)
 
-Colin's job-search learning plan, worked through **on this repo**. Each step is a real change to Back in Bounds, so the learning and the portfolio grow together.
+Colin's QA learning plan, worked through **on this repo**. Each step is a real change to Back in Bounds, so the learning and the portfolio grow together.
 
-**Back in Bounds is a test lab.** No new golf features and no need for more real rounds. The work here is testing the app: automated tests, test data, CI and SQL checks. Where tests need data, use small, controlled test datasets (fixtures) with known expected values rather than entering real rounds.
+**Back in Bounds is a test lab.** No new golf features and no need for more real rounds. The work here is testing the app: automated tests, test data and CI. Where tests need data, use small, controlled test datasets (fixtures) with known expected values rather than entering real rounds.
 
-**Priority:** Playwright → Python for QA → SQL → Python for SQL
-**Study time:** weekdays 08:30–10:30, shared with CV and job-application work
-**Progress checklist:** ticked off on the Learning path panel of Colin's *Daily Board*. Step IDs (PW1, Q1, S1…) match that checklist. Update the `[ ]` boxes here as well if useful.
+**This repo covers:** Playwright → Python for QA
+**SQL, pandas and Python for SQL** have moved to the [waiting-list](https://github.com/colinjpaul/waiting-list) repo (HSE/NTPF hospital waiting list data). See its LEARNING.md for steps S1–S7 and PS1–PS6.
+
+**Study time:** weekday mornings, at Colin's own pace (no deadlines). Tue/Thu mornings are the QA days.
+**Progress checklist:** ticked off on the Learning path panel of Colin's *Daily Board*. Step IDs (PW1, Q1…) match that checklist. Update the `[ ]` boxes here as well if useful.
 
 ## How to help (for Claude in VS Code)
 
@@ -16,17 +18,6 @@ Colin's job-search learning plan, worked through **on this repo**. Each step is 
 - Don't break the existing suites: `pytest test_golf_app_v8.py` (Tier 1) and `pytest test_playwright_e2e.py` (Tier 2, needs the app running on :8050).
 
 ---
-
-## Timeline (revised 5 Oct 2026)
-
-The 2-hour morning block is now shared with CV work, so the plan runs to February instead of being squeezed into a few weeks.
-
-| By | Target |
-|---|---|
-| **End Oct** | Playwright PW1–PW6 (through Page Object Model) |
-| **End Nov** | PW7–PW10 (suite green in GitHub Actions with CI badge) · Python for QA Q1–Q3 |
-| **End Dec** | Python for QA Q4–Q6 · SQL S1–S4 (lighter month: Christmas) |
-| **Jan–Feb 2027** | SQL S5–S7 · Python for SQL PS1–PS6 · portfolio polish F1–F3 |
 
 ## 1 · Playwright (Python) — extend `test_playwright_e2e.py`
 
@@ -58,33 +49,9 @@ Already in place: 19 pytest tests and the hand-rolled `run_tests_v8.py` runner.
   - *In progress.* `tests/data/fermoy_rounds_sample.csv` and `fermoy_rounds_edge_cases.csv` exist with expected answers in `tests/data/README.md`. Next: a `conftest.py` fixture that loads them, and tests that use it.
 - [ ] **Q6** Reporting: generate a `pytest-html` (or Allure) report; link a sample in the README.
 
-## 3 · SQL — `data/analytics.db`
-
-Built by `export_to_sqlite.py` (tables: `fermoy_rounds`, `range_sessions`). Practise in DB Browser for SQLite, the VS Code SQLite extension, or the `sqlite3` CLI. Save good queries in `sql/`.
-
-- [ ] **S1** `SELECT`, `WHERE`, `ORDER BY`, `LIMIT`: best 5 rounds; all rounds over 85.
-- [ ] **S2** Aggregates: average score, putts and GIR per month with `GROUP BY` / `HAVING`; average carry per club.
-- [ ] **S3** JOINs: add a `courses` (or `holes`) table and join it to rounds; use a `LEFT JOIN` to find rounds with no matching course.
-- [ ] **S4** Subqueries and CTEs: rounds better than your average; a CTE for front-nine vs back-nine comparison.
-- [ ] **S5** Window functions: rolling 3-round average (`AVG() OVER`), `RANK()` rounds by score, running putt totals.
-- [ ] **S6** Data-quality checks: SQL that finds duplicate rounds, NULL hole scores, totals that don't equal the sum of holes. Wire these into pytest as data tests.
-- [ ] **S7** Writes: `INSERT` a round, `UPDATE` a mistake, wrap it in a transaction and roll back.
-
-## 4 · Python for SQL — connect the app to the database
-
-- [ ] **PS1** `sqlite3` in Python: connect, run parameterised queries (never string-format SQL).
-- [ ] **PS2** pandas `read_sql` and `to_sql`: refactor `export_to_sqlite.py` to use them cleanly and idempotently.
-- [ ] **PS3** pandas essentials: load rounds from SQLite instead of CSV in the app; select, filter and clean with pandas.
-- [ ] **PS4** pandas `groupby` / `merge` next to the equivalent SQL from S2/S3; confirm both give the same numbers in a test.
-- [ ] **PS5** SQLAlchemy: create an engine so the app could switch from SQLite to PostgreSQL by changing one URL.
-- [ ] **PS6** Test the data layer: pytest fixtures that build a temporary SQLite DB, load sample rows, and test your queries.
-
 ## Portfolio milestones
 
 - [ ] **F1** Playwright suite running green in GitHub Actions (PW10).
-- [ ] **F2** App reading from SQLite, with SQL analysis queries in `sql/` and data-quality tests (S6, PS3).
 - [ ] **F3** README updated with the CI badge, test report and a short "what I learned" section.
 
-## Later: pandas and data science
-
-Reshaping (`pivot_table`, `melt`), time series (`resample`, `rolling`), seaborn charts, NumPy, and a first scikit-learn model (e.g. predict score from putts and GIR).
+(F2, the SQL and data-quality milestone, now lives in the waiting-list repo.)
