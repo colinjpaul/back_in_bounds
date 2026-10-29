@@ -8,7 +8,7 @@ Colin's QA learning plan, worked through **on this repo**. Each step is a real c
 **SQL, pandas and Python for SQL** have moved to the [waiting-list](https://github.com/colinjpaul/waiting-list) repo (HSE/NTPF hospital waiting list data). See its LEARNING.md for steps S1–S7 and PS1–PS6.
 
 **Study time:** weekday mornings, at Colin's own pace (no deadlines).
-**Priority (from 2026-10-29):** getting a job comes first, so QA gets every weekday morning. The waiting-list data track is on hold after PS0 until F1 (Playwright suite green in GitHub Actions) is done.
+**Status (from 2026-10-29): paused.** Colin's focus moved to the waiting-list repo.
 **Progress checklist:** ticked off on the Learning path panel of Colin's *Daily Board*. Step IDs (PW1, Q1…) match that checklist. Update the `[ ]` boxes here as well if useful.
 
 ## How to help (for Claude in VS Code)
