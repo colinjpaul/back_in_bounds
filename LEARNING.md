@@ -5,7 +5,7 @@ Colin's QA learning plan, worked through **on this repo**. Each step is a real c
 **Back in Bounds is a test lab.** No new golf features and no need for more real rounds. The work here is testing the app: automated tests, test data and CI. Where tests need data, use small, controlled test datasets (fixtures) with known expected values rather than entering real rounds.
 
 **This repo covers:** Playwright → Python for QA
-**SQL, pandas and Python for SQL** have moved to the [waiting-list](https://github.com/colinjpaul/waiting-list) repo (HSE/NTPF hospital waiting list data). See its LEARNING.md for steps S1–S7 and PS1–PS6.
+**SQL, pandas and Python for SQL** have moved to the [waiting-list](https://github.com/colinjpaul/waiting-list) repo (HSE/NTPF hospital waiting list data). See its LEARNING.md for the current plan.
 
 **Study time:** weekday mornings, at Colin's own pace (no deadlines).
 **Status (from 2026-10-29): paused.** Colin's focus moved to the waiting-list repo.
